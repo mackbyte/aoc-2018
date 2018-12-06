@@ -1,8 +1,11 @@
-const one = require('./1');
+const one = require('./1'),
+    two = require('./2');
 
 const puzzles = new Map([
     ["1-1", one.one],
     ["1-2", one.two],
+    ["2-1", two.one],
+    ["2-2", two.two],
 ]);
 
 if (process.argv.length !== 3) {
@@ -27,7 +30,7 @@ Promise.all(selected).then(results => {
 function wrap(code, puzzle) {
     return new Promise((resolve => {
         puzzle.then(value => {
-            resolve({code, value})
+            resolve({ code, value })
         });
     }))
 }

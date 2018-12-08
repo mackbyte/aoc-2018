@@ -1,11 +1,14 @@
 const one = require('./1'),
     two = require('./2');
+    three = require('./3');
 
 const puzzles = new Map([
     ["1-1", one.one],
     ["1-2", one.two],
     ["2-1", two.one],
     ["2-2", two.two],
+    ["3-1", three.one],
+    ["3-2", three.two],
 ]);
 
 if (process.argv.length !== 3) {
@@ -18,6 +21,11 @@ let puzzle = process.argv[2];
 let selected = Array.from(puzzles.keys())
     .filter(code => code.startsWith(puzzle))
     .map(code => wrap(code, puzzles.get(code)()));
+
+if(selected.length === 0) {
+    console.log(`Did not match any puzzles starting with '${puzzle}'`);
+    process.exit(2)
+}
 
 Promise.all(selected).then(results => {
     results.forEach(result => {

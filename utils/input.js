@@ -24,7 +24,23 @@ function readAll(file) {
     })
 }
 
+function readString(file) {
+    return new Promise(resolve => {
+        const lines = [],
+            rdr = reader(file);
+
+        rdr.on('line', line => {
+            lines.push(line)
+        });
+
+        rdr.on('close', () => {
+            resolve(lines.join(''));
+        })
+    })
+}
+
 module.exports = {
     reader,
-    readAll
+    readAll,
+    readString
 };

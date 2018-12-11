@@ -7,7 +7,8 @@ const one = require('./1'),
     seven = require('./7'),
     eight = require('./8'),
     nine = require('./9'),
-    ten = require('./10');
+    ten = require('./10'),
+    eleven = require('./11');
 
 const puzzles = new Map([
     ["1-1", one.one],
@@ -29,7 +30,9 @@ const puzzles = new Map([
     ["9-1", nine.one],
     ["9-2", nine.two],
     ["10-1", ten.one],
-    ["10-2", ten.two]
+    ["10-2", ten.two],
+    ["11-1", eleven.one],
+    ["11-2", eleven.two]
 ]);
 
 if (process.argv.length !== 3) {
@@ -43,7 +46,7 @@ let selected = Array.from(puzzles.keys())
     .filter(code => code.startsWith(puzzle))
     .map(code => wrap(code, puzzles.get(code)()));
 
-if(selected.length === 0) {
+if (selected.length === 0) {
     console.log(`Did not match any puzzles starting with '${puzzle}'`);
     process.exit(2)
 }

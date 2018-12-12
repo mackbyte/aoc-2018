@@ -8,7 +8,8 @@ const one = require('./1'),
     eight = require('./8'),
     nine = require('./9'),
     ten = require('./10'),
-    eleven = require('./11');
+    eleven = require('./11'),
+    twelve = require('./12');
 
 const puzzles = new Map([
     ["1-1", one.one],
@@ -32,7 +33,9 @@ const puzzles = new Map([
     ["10-1", ten.one],
     ["10-2", ten.two],
     ["11-1", eleven.one],
-    ["11-2", eleven.two]
+    ["11-2", eleven.two],
+    ["12-1", twelve.one],
+    ["12-2", twelve.two]
 ]);
 
 if (process.argv.length !== 3) {

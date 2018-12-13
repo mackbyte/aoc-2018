@@ -16,15 +16,16 @@ function one() {
         });
 
         reader.on('close', () => {
-            simulation.evolveFor(5000);
-            const elapsedTime = new Date(new Date()-startTime);
-            console.log(`Elapsed time ${elapsedTime.getSeconds()}.${elapsedTime.getMilliseconds()}s`);
+            simulation.evolveFor(20);
+            const elapsedTime = new Date(new Date() - startTime);
+            console.log(`Elapsed time ${ elapsedTime.getSeconds() }.${ elapsedTime.getMilliseconds() }s`);
             resolve(simulation.sumPotNumbers());
         })
     })
 }
 
 function two() {
+    const startTime = new Date();
     return new Promise(resolve => {
         const reader = input.reader('twelve.txt');
         let simulation;
@@ -40,6 +41,8 @@ function two() {
 
         reader.on('close', () => {
             simulation.evolveFor(50000000000);
+            const elapsedTime = new Date(new Date() - startTime);
+            console.log(`Elapsed time ${ elapsedTime.getSeconds() }.${ elapsedTime.getMilliseconds() }s`);
             resolve(simulation.sumPotNumbers());
         })
     })
@@ -47,7 +50,7 @@ function two() {
 
 class Simulation {
     constructor(state) {
-        this.pots = new Pots();
+        this.pots = new Pots(0);
         this.pots.init(state);
         this.rules = []
     }
@@ -57,32 +60,29 @@ class Simulation {
     }
 
     evolveFor(iterations) {
+        let percent = iterations / 100;
+
         for (let i = 0; i < iterations; i++) {
             this.evolve();
-            // if(i % (iterations/100) === 0) {
-            //     console.log(`Completed ${i / (iterations/100)}%`)
-            // }
+            if (i % percent === 0) {
+                console.log(`Completed ${ i / percent }%`)
+            }
         }
     }
 
     evolve() {
-        let newPots = new Pots();
-        let current = this.pots.head;
+        let newPots = new Pots(this.pots.firstNumber);
+        newPots.pots = '..';
 
-        let matching = this.rules.find(rule => rule.matches(current.getNeighbourPlants())),
-        firstPot = matching ? new Pot(matching.action) : new Pot('.');
-        newPots.addFirstPot(current.number, firstPot);
-        current = current.next;
-
-        while(current.next) {
-            let matching = this.rules.find(rule => rule.matches(current.getNeighbourPlants())),
-                pot = matching ? new Pot(matching.action) : new Pot('.');
-            newPots.addPotToEnd(pot);
-            current = current.next;
+        let selection, matched;
+        for (let i = 2; i < this.pots.pots.length - 3; i++) {
+            selection = this.pots.pots.slice(i-2, i+3);
+            matched = this.rules.find(rule => rule.matches(selection));
+            newPots.pots += matched ? matched.action : '.';
         }
-        newPots.addPotToEnd(new Pot(current.plant));
-        newPots.pad();
 
+        newPots.pots += '..';
+        newPots.pad();
         this.pots = newPots;
     }
 
@@ -111,98 +111,47 @@ class Rule {
 
 
 class Pots {
-    constructor() {
-        this.head = null;
-        this.tail = null;
+    constructor(firstNumber) {
+        this.pots = "";
+        this.firstNumber = firstNumber;
     }
 
     init(state) {
-        let initialPots = state.split('');
-
-        this.addFirstPot(0,  new Pot(initialPots.shift()));
-
-        initialPots.forEach(plant => {
-            this.addPotToEnd(new Pot(plant))
-        });
-
-        for(let i = 0; i < 2; i++) {
-            this.addPotToStart(new Pot('.'));
-            this.addPotToEnd(new Pot('.'));
-        }
-    }
-
-    addFirstPot(number, pot) {
-        pot.number = number;
-        this.head = pot;
-        this.tail = pot;
-    }
-
-    addPotToEnd(pot) {
-        this.tail.next = pot;
-        pot.previous = this.tail;
-        pot.number = this.tail.number+1;
-        this.tail = pot;
-    }
-
-    addPotToStart(pot) {
-        this.head.previous = pot;
-        pot.next = this.head;
-        pot.number = this.head.number-1;
-        this.head = pot;
+        this.pots = `....${ state }....`;
+        this.firstNumber = -4;
     }
 
     pad() {
-        let padHead = [this.head, this.head.next].filter(pot => pot.plant === '#').length,
-            padTail = [this.tail, this.tail.previous].filter(pot => pot.plant === '#').length;
+        let padStartWith = '',
+            padEndWith = '';
 
-        for(let i = 0; i < padHead; i++) {
-            this.addPotToStart(new Pot('.'))
+        for (let i = 2; i <= 4; i++) {
+            padStartWith += this.pots.charAt(i) === '#' ? '.' : ''
         }
 
-        for(let i = 0; i < padTail; i++) {
-            this.addPotToEnd(new Pot('.'))
+        for (let i = this.pots.length - 3; i >= this.pots.length - 5; i--) {
+            padEndWith += this.pots.charAt(i) === '#' ? '.' : ''
         }
+
+        this.pots = padStartWith + this.pots;
+        this.pots += padEndWith;
+        this.firstNumber -= padStartWith.length;
     }
 
     sumPotNumbers() {
-        let current = this.head,
+        let current = this.firstNumber,
             total = 0;
-        while(current.next) {
-            total += current.plant === '#' ? current.number : 0;
-            current = current.next;
+
+        for (let i = 0; i < this.pots.length; i++) {
+            total += this.pots.charAt(i) === '#' ? current : 0;
+            current++;
         }
-        total += current.plant === '#' ? current.number : 0;
+
         return total
     }
 
     print() {
-        let current = this.head,
-            line = '';
-        while(current.next) {
-            line += current.plant;
-            current = current.next;
-        }
-        line += current.plant;
-        console.log(line);
-    }
-}
-
-class Pot {
-    constructor(plant) {
-        this.number = -1;
-        this.plant = plant;
-        this.next = null;
-        this.previous = null;
-    }
-
-    getNeighbourPlants() {
-        let emptyPot = new Pot('.'),
-        left = this.previous || emptyPot,
-            leftTwo = left.previous || emptyPot,
-            right = this.next || emptyPot,
-            rightTwo = right.next || emptyPot;
-
-        return [leftTwo, left, this, right, rightTwo].reduce((row, pot) => row + pot.plant, '');
+        console.log(this.pots);
     }
 }
 

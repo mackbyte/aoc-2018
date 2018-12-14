@@ -50,8 +50,7 @@ function two() {
 
 class Simulation {
     constructor(state) {
-        this.pots = new Pots(0);
-        this.pots.init(state);
+        this.pots = new Pots(state);
         this.rules = []
     }
 
@@ -71,17 +70,15 @@ class Simulation {
     }
 
     evolve() {
-        let newPots = new Pots(this.pots.firstNumber);
-        newPots.pots = '..';
+        let newPots = this.pots.copy();
 
-        let selection, matched;
-        for (let i = 2; i < this.pots.pots.length - 3; i++) {
-            selection = this.pots.pots.slice(i-2, i+3);
-            matched = this.rules.find(rule => rule.matches(selection));
-            newPots.pots += matched ? matched.action : '.';
-        }
+        this.rules.forEach(rule => {
+            this.pots.locations(rule.pattern)
+                .forEach(location => {
+                    newPots.setPot(location + 2, rule.action)
+                });
+        });
 
-        newPots.pots += '..';
         newPots.pad();
         this.pots = newPots;
     }
@@ -100,42 +97,50 @@ class Rule {
         const ruleRegex = /(.{5}) => (.)/,
             rule = text.match(ruleRegex);
 
-        this.toMatch = rule[1];
-        this.action = rule[2];
-    }
-
-    matches(pots) {
-        return this.toMatch === pots
+        this.pattern = rule[1];
+        this.action = rule[2]
     }
 }
 
-
 class Pots {
-    constructor(firstNumber) {
-        this.pots = "";
-        this.firstNumber = firstNumber;
+    constructor(state) {
+        this.pots = state;
+        this.firstNumber = 0;
+        this.pad();
     }
 
-    init(state) {
-        this.pots = `....${ state }....`;
-        this.firstNumber = -4;
+    copy() {
+        let pots = new Pots('.'.repeat(this.pots.length));
+        pots.firstNumber = this.firstNumber;
+        return pots;
+    }
+
+    setPot(index, value) {
+        this.pots = this.pots.substring(0, index) + value + this.pots.substring(index + 1);
+    }
+
+    locations(rule) {
+        let locations = [],
+            i = -1;
+
+        while ( (i = this.pots.indexOf(rule, i + 1)) >= 0 ) {
+            locations.push(i)
+        }
+
+        return locations;
     }
 
     pad() {
-        let padStartWith = '',
-            padEndWith = '';
-
-        for (let i = 2; i <= 4; i++) {
-            padStartWith += this.pots.charAt(i) === '#' ? '.' : ''
+        let firstPlant = this.pots.indexOf('#');
+        if(firstPlant !== -1 && firstPlant < 4) {
+            this.pots = '.'.repeat(4-firstPlant) + this.pots;
+            this.firstNumber -= 4-firstPlant;
         }
 
-        for (let i = this.pots.length - 3; i >= this.pots.length - 5; i--) {
-            padEndWith += this.pots.charAt(i) === '#' ? '.' : ''
+        let lastPlant = this.pots.lastIndexOf('#');
+        if(lastPlant !== -1 && lastPlant > this.pots.length-5) {
+            this.pots += '.'.repeat(5-(this.pots.length-lastPlant))
         }
-
-        this.pots = padStartWith + this.pots;
-        this.pots += padEndWith;
-        this.firstNumber -= padStartWith.length;
     }
 
     sumPotNumbers() {
